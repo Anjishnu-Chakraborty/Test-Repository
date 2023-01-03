@@ -1,0 +1,105 @@
+SELECT 	fieldVisit.*, 
+	mstVisitStatus.name AS visitStatusName, 
+	CONCAT(COALESCE(user.firstName,''),' ',COALESCE(user.lastName,'')) AS visitedBy,
+	
+	clientCustomer.phoneNumber,
+	clientCustomer.email,
+	CONCAT(COALESCE(clientCustomer.firstName,''),' ',COALESCE(clientCustomer.lastName,'')) AS visitToName,
+	clientCustomer.address,
+	clientCustomer.profilePic,
+	
+
+	clientLocationMap.districtId,
+	clientLocationMap.stateId,
+	clientLocationMap.zoneId,
+	clientLocationMap.countryId,
+
+	countries.countryName,
+	cities.cityName,
+	states.stateName,
+	zone.zoneName,
+
+	masterContactTypes.slNo AS custTypeTyp,
+
+	mstContactType.contactTypeName,
+
+	IFNULL(organizationManagement.organizationName,CONCAT(COALESCE(clientCustomer.firstName,''),' ',COALESCE(clientCustomer.lastName,''))) 		AS customerName,
+	CASE 
+	WHEN clientCustomer.custBusinessName IS NULL THEN CONCAT(COALESCE(clientCustomer.firstName,''),''
+	 ,COALESCE(clientCustomer.lastName,'')) 
+	WHEN clientCustomer.custBusinessName = '' THEN CONCAT(COALESCE(clientCustomer.firstName,''),' ',COALESCE(clientCustomer.lastName,'')) 
+	WHEN clientCustomer.custBusinessName != '' THEN clientCustomer.custBusinessName 
+	END AS customerName ,
+	
+	(SELECT SUM(quantity) FROM visitConvertion WHERE status = 1 AND fieldVisitId = fieldVisit.id)
+	
+
+FROM 	fieldVisit,mstVisitStatus,user,clientCustomer,clientLocationMap,countries,cities,states,zone,masterContactTypes,mstContactType,
+	organizationManagement
+
+
+WHERE	mstVisitStatus.id = fieldVisit.visitStatus
+AND	user.userId = fieldVisit.userId
+AND	fieldVisit.clientId = ? 
+AND 	fieldVisit.status = 1 
+AND 	fieldVisit.fromDealer = 0 
+AND 	fieldVisit.isVisited = 1 
+AND 	fieldVisit.visitType IN ('0','1')
+AND	mstVisitStatus.status = 1
+AND	user.isApproved = 1
+AND	user.isActive = 1
+AND	user.deleted = 0
+AND	clientCustomer.customerId = fieldVisit.contactId
+AND	clientCustomer.deleted = 0 
+AND 	clientCustomer.status = 1 
+AND 	clientLocationMap.refId = clientCustomer.customerId 
+AND 	clientLocationMap.tableName = 'clientCustomer'
+AND	mstContactType.contactTypeId = clientCustomer.contactTypeId
+AND	mstContactType.mstSlNo = masterContactTypes.slNo
+AND	organizationManagement.organizationId = clientCustomer.organizationId 
+AND	countries.countryId = clientLocationMap.countryId 
+AND 	countries.isActive = 1 
+AND 	countries.deleted = 0
+AND	states.stateId = clientLocationMap.stateId 
+AND 	states.isActive = 1 
+AND 	states.deleted = 0
+AND	cities.cityId = clientLocationMap.districtId 
+AND 	cities.isActive = 1 
+AND 	cities.deleted = 0
+AND	zone.zoneId = clientLocationMap.zoneId 
+AND 	zone.isActive = 1 
+AND 	zone.deleted = 0
+    
+
+
+if(data.allUser !== undefined && Array.isArray(data.allUser) && data.allUser !== []){
+
+	query += " AND fieldVisit.userId IN (" + data.allUser.join(',') + ")"
+}
+
+if (data.searchFrom != undefined && data.searchTo != undefined) {
+            if (data.searchFrom && data.searchTo && data.searchFrom != "" && data.searchTo != "") {
+                query += " AND  DATE_FORMAT(fieldVisit.actualDate,'%Y-%m-%d') BETWEEN  ? AND ? ";
+                params.push(data.searchFrom);
+                params.push(data.searchTo);
+            } else if (data.searchFrom && data.searchFrom != "") {
+                query += " AND  DATE_FORMAT(fieldVisit.actualDate,'%Y-%m-%d') >= ? ";
+                params.push(data.searchFrom);
+            } else if (data.searchTo && data.searchTo != "") {
+                query += " AND  DATE_FORMAT(fieldVisit.actualDate,'%Y-%m-%d') <= ? ";
+                params.push(data.searchTo);
+            }
+        }
+if (data.searchDate!== undefined && data.searchDate != "") {
+      query += " AND  DATE_FORMAT(fieldVisit.actualDate,'%Y-%m-%d') = '"+data.searchDate+"' ";
+}
+
+
+query += " ORDER BY fieldVisit.id DESC ";
+
+
+if (data.limit !== undefined && data.offset !== undefined) {
+            query += " LIMIT ? OFFSET ? ";
+            params.push(parseInt(data.limit));
+            params.push(parseInt(data.offset));
+}

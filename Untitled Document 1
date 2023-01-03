@@ -1,0 +1,6 @@
+IFNULL(organizationManagement.organizationName,CONCAT(COALESCE(clientCustomer.firstName,''),' ',COALESCE(clientCustomer.lastName,''))) AS customerName,
+CASE 
+WHEN clientCustomer.custBusinessName IS NULL THEN CONCAT(COALESCE(clientCustomer.firstName,''),' ',COALESCE(clientCustomer.lastName,'')) 
+WHEN clientCustomer.custBusinessName = '' THEN CONCAT(COALESCE(clientCustomer.firstName,''),' ',COALESCE(clientCustomer.lastName,'')) 
+WHEN clientCustomer.custBusinessName != '' THEN clientCustomer.custBusinessName 
+END AS customerName

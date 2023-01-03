@@ -1,0 +1,44 @@
+SELECT   fieldVisit.*, mstVisitStatus.name AS visitStatusName, 
+                            CONCAT(COALESCE(user.firstName,''),' ',COALESCE(user.lastName,'')) AS visitedBy,
+                            contactManagement.phoneNumber, contactManagement.email,
+                            CONCAT(COALESCE(contactManagement.firstName,''),' ',COALESCE(contactManagement.lastName,'')) AS visitToName, contactManagement.address, contactManagement.profilePic,
+                            clientLocationMap.districtId, clientLocationMap.stateId, clientLocationMap.zoneId, clientLocationMap.countryId, countries.countryName, cities.cityName, states.stateName, zone.zoneName, masterContactTypes.slNo AS custTypeTyp, mstContactType.contactTypeName,
+                                IFNULL(organizationManagement.organizationName,CONCAT(COALESCE(contactManagement.firstName,''),' ',COALESCE(contactManagement.lastName,''))) AS customerName , 
+
+                                (SELECT SUM(visitConvertion.quantity) FROM visitConvertion WHERE visitConvertion.status = 1 AND visitConvertion.fieldVisitId = fieldVisit.id) AS TotalConvertionQuantity
+    
+
+                        FROM    fieldVisit, mstVisitStatus, user, contactManagement, clientLocationMap, countries, cities, states, zone, masterContactTypes, mstContactType, organizationManagement
+
+
+                        WHERE   mstVisitStatus.id = fieldVisit.visitStatus
+                        AND user.userId = fieldVisit.userId
+                        AND fieldVisit.clientId = ? 
+                        AND fieldVisit.status = 1 
+                        AND fieldVisit.fromDealer = 0 
+                        AND fieldVisit.isVisited = 1 
+                        AND fieldVisit.visitType IN ('2','3')
+                        AND mstVisitStatus.status = 1
+                        AND user.isApproved = 1
+                        AND user.isActive = 1
+                        AND user.deleted = 0
+                        AND contactManagement.contactId = fieldVisit.contactId
+                        AND contactManagement.deleted = 0 
+                        AND contactManagement.status = 1 
+                        AND clientLocationMap.refId = contactManagement.contactId 
+                        AND clientLocationMap.tableName = 'contactManagement'
+                        AND mstContactType.contactTypeId = contactManagement.contactTypeId
+                        AND mstContactType.mstSlNo = masterContactTypes.slNo
+                        AND organizationManagement.organizationId = contactManagement.organizationId 
+                        AND countries.countryId = clientLocationMap.countryId 
+                        AND countries.isActive = 1 
+                        AND countries.deleted = 0
+                        AND states.stateId = clientLocationMap.stateId 
+                        AND states.isActive = 1 
+                        AND states.deleted = 0
+                        AND cities.cityId = clientLocationMap.districtId 
+                        AND cities.isActive = 1 
+                        AND cities.deleted = 0
+                        AND zone.zoneId = clientLocationMap.zoneId 
+                        AND zone.isActive = 1 
+                        AND zone.deleted = 0 
