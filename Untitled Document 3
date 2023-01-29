@@ -42,3 +42,7 @@ SELECT   fieldVisit.*, mstVisitStatus.name AS visitStatusName,
                         AND zone.zoneId = clientLocationMap.zoneId 
                         AND zone.isActive = 1 
                         AND zone.deleted = 0 
+
+
+
+Edited By Anjishnu Chakraborty Dated (29/01/2023)
